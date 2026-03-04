@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gemini Chat - 채팅방</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<style>
+    body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f2f5; margin: 0; }
+    .chat-container {
+        max-width: 500px; margin: 20px auto; background: white;
+        display: flex; flex-direction: column; height: 90vh;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 8px;
+    }
+    .chat-header {
+        padding: 15px; background: #0084ff; color: white;
+        display: flex; justify-content: space-between; align-items: center;
+        border-radius: 8px 8px 0 0;
+    }
+    #chat-content {
+        flex: 1; overflow-y: auto; padding: 20px;
+        background: #abc1d1; display: flex; flex-direction: column;
+    }
+    /* 시스템 메시지: 퇴장/입장 중앙 정렬 */
+    .system-msg {
+        align-self: center !important;
+        background: rgba(0, 0, 0, 0.2);
+        color: white; padding: 5px 15px; border-radius: 15px;
+        font-size: 11px; margin: 10px 0; text-align: center;
+        max-width: 80%;
+    }
+    .msg-box {
+        max-width: 250px; padding: 8px 12px; border-radius: 10px;
+        font-size: 14px; word-break: break-all; position: relative;
+    }
+    .my-msg { background: #fee500; border-top-right-radius: 0; }
+    .other-msg { background: white; border-top-left-radius: 0; }
+    .chat-time { font-size: 10px; color: #555; margin: 0 5px; white-space: nowrap; }
+    .sender-name { font-size: 11px; color: #333; margin: 0 5px 2px 5px; }
+    .input-group { padding: 15px; background: white; display: flex; gap: 8px; border-radius: 0 0 8px 8px; }
+    #message { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
+    .btn-send { background: #fee500; border: none; padding: 0 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+    .btn-exit { color: white; text-decoration: none; background: #ff4b4b; padding: 5px 10px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h4 style="margin: 0;">방 번호: <span th:text="${roomId}">0</span></h4>
+            <a th:href="@{/rooms/exit/{id}(id=${roomId})}" class="btn-exit">나가기</a>
+        </div>
+        <input type="hidden" id="roomId" th:value="${roomId}">
+        <input type="hidden" id="sender" th:value="${session.user != null ? session.user.username : '익명'}">
+        <div id="chat-content"></div>
+        <div class="input-group">
+            <input type="text" id="message" placeholder="메시지를 입력하세요..." onkeypress="if(event.keyCode==13) sendMessage()">
+            <button class="btn-send" onclick="sendMessage()">전송</button>
+        </div>
+    </div>
+    <script src="/js/app.js"></script>
+</body>
+</html>

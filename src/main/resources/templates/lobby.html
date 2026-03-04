@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>채팅 로비</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .room-list { margin-top: 20px; }
+        .room-item { padding: 15px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .create-form { background: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        input { padding: 8px; margin-right: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 8px 15px; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-create { background: #28a745; }
+        .btn-enter { background: #007bff; margin-right: 5px; }
+        .btn-delete { background: #dc3545; }
+        .room-info { flex-grow: 1; }
+        .lock-icon { margin-left: 5px; color: #f39c12; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>채팅방 로비</h2>
+            <div>
+                <span th:text="${session.user.username} + '님 환영합니다!'">사용자</span>
+                <a href="/logout" style="margin-left:15px; color: #666; font-size: 0.9rem; text-decoration: none;">로그아웃</a>
+            </div>
+        </div>
+
+        <div th:if="${param.error}" style="margin-top: 10px; color: red; font-size: 0.9rem;">
+            <p th:if="${param.error[0] == 'wrong_password'}">⚠️ 비밀번호가 일치하지 않습니다.</p>
+            <p th:if="${param.error[0] == 'no_permission'}">⚠️ 방 삭제 권한이 없습니다.</p>
+        </div>
+
+        <hr>
+
+        <div class="create-form">
+            <h4>새 방 만들기</h4>
+            <form action="/rooms/create" method="post">
+                <input type="text" name="roomName" placeholder="방 제목" required>
+                <input type="password" name="password" placeholder="비밀번호(선택)">
+                <input type="number" name="maxUser" value="10" min="2" max="100" style="width: 60px;">
+                <button type="submit" class="btn-create">방 생성</button>
+            </form>
+        </div>
+
+        <div class="room-list">
+            <h4>진행 중인 채팅방</h4>
+            <div th:if="${#lists.isEmpty(rooms)}">현재 생성된 방이 없습니다.</div>
+            
+            <div th:each="room : ${rooms}" class="room-item">
+                <div class="room-info">
+                    <strong th:text="${room.roomName}">방 제목</strong>
+                    <span th:if="${room.password != null && !room.password.isEmpty()}" class="lock-icon">🔒</span>
+                    <span th:text="' (' + ${room.userCount} + '/' + ${room.maxUser} + ')'" style="font-size: 0.8rem; color: #888;"></span>
+                </div>
+                
+                <div style="display: flex;">
+                    <button class="btn-enter" 
+                            th:onclick="enterWithPassword([[${room.id}]], [[${room.password != null && !room.password.isEmpty()}]])">
+                        입장
+                    </button>
+
+                    <form th:if="${room.owner.id == session.user.id}" 
+                          th:action="@{/rooms/delete/{id}(id=${room.id})}" 
+                          method="post" 
+                          onsubmit="return confirm('정말 이 방을 삭제하시겠습니까?');">
+                        <button type="submit" class="btn-delete">삭제</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function enterWithPassword(roomId, hasPassword) {
+            let url = "/rooms/enter/" + roomId;
+            
+            if (hasPassword) {
+                const pw = prompt("비밀번호가 설정된 방입니다. 비밀번호를 입력하세요.");
+                if (pw === null) return; // 취소 버튼 누른 경우
+                if (pw === "") {
+                    alert("비밀번호를 입력해야 합니다.");
+                    return;
+                }
+                url += "?password=" + encodeURIComponent(pw);
+            }
+            
+            location.href = url;
+        }
+    </script>
+</body>
+</html>
